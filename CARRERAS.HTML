@@ -1,0 +1,334 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carreras | Tecnológico de Los Reyes</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f2fa;
+    color: #333;
+}
+
+/* ENCABEZADO */
+header {
+    background: linear-gradient(135deg, #24124f, #7546b8);
+    padding: 55px 20px;
+    color: white;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 36px;
+    margin: 15px 0;
+}
+
+header p {
+    font-size: 17px;
+    color: #e6ddff;
+}
+
+/* CONTENIDO */
+main {
+    max-width: 1250px;
+    margin: auto;
+    padding: 35px 20px;
+}
+
+.titulo {
+    text-align: center;
+    color: #43247c;
+    margin-bottom: 25px;
+}
+
+/* BUSCADOR */
+.buscador {
+    display: block;
+    width: 100%;
+    max-width: 550px;
+    margin: 0 auto 20px;
+    padding: 16px;
+    border: 2px solid #a58bd1;
+    border-radius: 12px;
+    font-size: 16px;
+    outline: none;
+}
+
+.buscador:focus {
+    border-color: #6437ac;
+}
+
+#contador {
+    text-align: center;
+    color: #71549b;
+    margin-bottom: 30px;
+}
+
+/* TARJETAS */
+.contenedor {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.tarjeta {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(45, 20, 90, 0.12);
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.tarjeta:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(45, 20, 90, 0.2);
+}
+
+/* IMÁGENES */
+.tarjeta img {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    background: #e9e0f7;
+}
+
+.informacion {
+    padding: 22px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.informacion h3 {
+    color: #43247c;
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+
+.informacion p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 18px;
+}
+
+.id {
+    background: #eee7fa;
+    color: #5c3298;
+    padding: 7px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.mensaje {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 45px;
+    color: #654595;
+    font-size: 17px;
+}
+
+/* PIE DE PÁGINA */
+footer {
+    background: #24124f;
+    color: white;
+    text-align: center;
+    padding: 25px;
+    margin-top: 40px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .contenedor {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .contenedor {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 27px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>🎓 TECNOLÓGICO SUPERIOR DE LOS REYES</h2>
+    <h1>Descubre tu futuro profesional</h1>
+    <p>Conoce nuestras carreras universitarias</p>
+</header>
+
+<main>
+
+    <h2 class="titulo">Nuestra oferta educativa</h2>
+
+    <input
+        type="text"
+        id="buscador"
+        class="buscador"
+        placeholder="🔍 Buscar una carrera..."
+    >
+
+    <p id="contador">Cargando carreras...</p>
+
+    <section id="contenedor" class="contenedor">
+        <p class="mensaje">Cargando información...</p>
+    </section>
+
+</main>
+
+<footer>
+    <p>© 2026 Tecnológico Superior de Los Reyes</p>
+    <p>Proyecto de consulta de API</p>
+</footer>
+
+<script>
+
+// ENLACE DE TU API
+const API_URL =
+"https://6ae4dca528393034b08dfd7a.mockapi.io/api/v1/meche";
+
+const contenedor = document.getElementById("contenedor");
+const buscador = document.getElementById("buscador");
+const contador = document.getElementById("contador");
+
+let carreras = [];
+
+// CONSULTAR API
+async function obtenerCarreras() {
+    try {
+        const respuesta = await fetch(API_URL);
+
+        if (!respuesta.ok) {
+            throw new Error("No se pudo consultar la API");
+        }
+
+        const datos = await respuesta.json();
+
+        if (!Array.isArray(datos)) {
+            throw new Error("Formato de datos incorrecto");
+        }
+
+        carreras = datos;
+        mostrarCarreras(carreras);
+
+    } catch (error) {
+        console.error(error);
+
+        contador.textContent = "";
+
+        contenedor.innerHTML = `
+            <p class="mensaje">
+                Error al cargar las carreras.
+                Revisa tu API de MockAPI.
+            </p>
+        `;
+    }
+}
+
+// MOSTRAR CARRERAS
+function mostrarCarreras(lista) {
+
+    contenedor.innerHTML = "";
+
+    contador.textContent =
+        "Carreras encontradas: " + lista.length;
+
+    if (lista.length === 0) {
+        contenedor.innerHTML = `
+            <p class="mensaje">
+                No se encontraron carreras.
+            </p>
+        `;
+        return;
+    }
+
+    lista.forEach(carrera => {
+
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "tarjeta";
+
+        const imagen = document.createElement("img");
+        imagen.src = carrera.imagen ||
+            "https://placehold.co/600x400?text=Sin+imagen";
+        imagen.alt = carrera.nombre || "Carrera";
+        imagen.loading = "lazy";
+
+        imagen.onerror = function() {
+            this.onerror = null;
+            this.src =
+                "https://placehold.co/600x400?text=Sin+imagen";
+        };
+
+        const informacion = document.createElement("div");
+        informacion.className = "informacion";
+
+        const nombre = document.createElement("h3");
+        nombre.textContent = carrera.nombre || "Sin nombre";
+
+        const descripcion = document.createElement("p");
+        descripcion.textContent =
+            carrera.descripcion || "Sin descripción";
+
+        const id = document.createElement("span");
+        id.className = "id";
+        id.textContent = "ID: " + carrera.id;
+
+        informacion.appendChild(nombre);
+        informacion.appendChild(descripcion);
+        informacion.appendChild(id);
+
+        tarjeta.appendChild(imagen);
+        tarjeta.appendChild(informacion);
+
+        contenedor.appendChild(tarjeta);
+    });
+}
+
+// BUSCADOR
+buscador.addEventListener("input", () => {
+
+    const texto = buscador.value.toLowerCase().trim();
+
+    const resultados = carreras.filter(carrera => {
+
+        const nombre =
+            (carrera.nombre || "").toLowerCase();
+
+        const descripcion =
+            (carrera.descripcion || "").toLowerCase();
+
+        return nombre.includes(texto) ||
+               descripcion.includes(texto);
+    });
+
+    mostrarCarreras(resultados);
+});
+
+// INICIAR
+obtenerCarreras();
+
+</script>
+
+</body>
+</html>

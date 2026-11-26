@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de API</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #fff0f6;
+            color: #49354f;
+        }
+
+        header {
+            background: linear-gradient(135deg, #a855b5, #e879b2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 10px;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px #c78bab40;
+        }
+
+        h2 {
+            color: #9b4ca6;
+        }
+
+        .controles {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 2px solid #e9b8dd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #a855b5;
+        }
+
+        button {
+            background: #b65bb3;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #8d398d;
+        }
+
+        .contador {
+            color: #a855b5;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .tabla {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #b65bb3;
+            color: white;
+            padding: 14px;
+            text-align: left;
+        }
+
+        td {
+            padding: 13px;
+            border-bottom: 1px solid #f1d6e9;
+        }
+
+        tr:hover {
+            background: #fff0fa;
+        }
+
+        .detalle {
+            display: none;
+            background: #f8e8fa;
+            border-left: 5px solid #b65bb3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .detalle h3 {
+            color: #91449b;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .mensaje {
+            text-align: center;
+            padding: 20px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #9b4ca6;
+        }
+
+        @media (max-width: 600px) {
+            .controles {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Mi Sistema de Consulta API</h1>
+    <p>Consulta de registros mediante MockAPI</p>
+</header>
+
+<main>
+    <section class="panel">
+
+        <h2>Registros disponibles</h2>
+
+        <div class="controles">
+            <input
+                type="text"
+                id="buscador"
+                placeholder="Buscar registro por nombre o ID..."
+            >
+
+            <button onclick="consultarAPI()">
+                Consultar API
+            </button>
+        </div>
+
+        <p class="contador" id="contador">
+            Total de registros: 0
+        </p>
+
+        <div class="tabla">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tablaDatos">
+                    <tr>
+                        <td colspan="3" class="mensaje">
+                            Cargando información...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="detalle" id="detalle">
+            <h3>Información del registro</h3>
+            <pre id="informacion"></pre>
+            <button onclick="cerrarDetalle()">Cerrar</button>
+        </div>
+
+    </section>
+</main>
+
+<footer>
+    Sistema de Consulta API - MockAPI
+</footer>
+
+<script>
+    const API_URL =
+    "https://6ae4dca528393034b08dfd7a.mockapi.io/api/v1/meche";
+
+    let registros = [];
+
+    const tabla = document.getElementById("tablaDatos");
+    const buscador = document.getElementById("buscador");
+    const contador = document.getElementById("contador");
+
+    async function consultarAPI() {
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="3" class="mensaje">
+                    Cargando registros...
+                </td>
+            </tr>
+        `;
+
+        cerrarDetalle();
+
+        try {
+            const respuesta = await fetch(API_URL);
+
+            if (!respuesta.ok) {
+                throw new Error("Error al consultar la API");
+            }
+
+            const datos = await respuesta.json();
+            registros = Array.isArray(datos) ? datos : [];
+
+            filtrarRegistros();
+
+        } catch (error) {
+            console.error(error);
+
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="3" class="mensaje">
+                        No se pudieron cargar los registros.
+                    </td>
+                </tr>
+            `;
+
+            contador.textContent = "Error de conexión";
+        }
+    }
+
+    function mostrarRegistros(datos) {
+        tabla.innerHTML = "";
+
+        contador.textContent =
+            "Registros encontrados: " + datos.length;
+
+        if (datos.length === 0) {
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="3" class="mensaje">
+                        No se encontraron registros.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        datos.forEach(item => {
+            const fila = document.createElement("tr");
+
+            const celdaID = document.createElement("td");
+            celdaID.textContent = item.id ?? "Sin ID";
+
+            const celdaNombre = document.createElement("td");
+            celdaNombre.textContent =
+                item.name || item.nombre || item.title ||
+                "Registro " + (item.id ?? "");
+
+            const celdaAcciones = document.createElement("td");
+
+            const boton = document.createElement("button");
+            boton.textContent = "Ver detalles";
+
+            boton.addEventListener("click", () => {
+                verDetalle(item);
+            });
+
+            celdaAcciones.appendChild(boton);
+
+            fila.appendChild(celdaID);
+            fila.appendChild(celdaNombre);
+            fila.appendChild(celdaAcciones);
+
+            tabla.appendChild(fila);
+        });
+    }
+
+    function filtrarRegistros() {
+        const texto = buscador.value.toLowerCase();
+
+        const filtrados = registros.filter(item =>
+            JSON.stringify(item).toLowerCase().includes(texto)
+        );
+
+        mostrarRegistros(filtrados);
+    }
+
+    function verDetalle(item) {
+        document.getElementById("detalle").style.display = "block";
+
+        document.getElementById("informacion").textContent =
+            JSON.stringify(item, null, 4);
+    }
+
+    function cerrarDetalle() {
+        document.getElementById("detalle").style.display = "none";
+    }
+
+    buscador.addEventListener("input", filtrarRegistros);
+
+    consultarAPI();
+</script>
+
+</body>
+</html>
